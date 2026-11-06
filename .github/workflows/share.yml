@@ -7,7 +7,8 @@ name: share
 
 on:
   issues:
-    types: [opened, edited]
+    # `labeled`: the maintainer can add `donation-link` to an issue opened without it, and it runs.
+    types: [opened, edited, labeled]
 
 permissions: {}
 
@@ -17,7 +18,9 @@ concurrency:
 
 jobs:
   share:
-    if: github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'donation-link')
+    if: >-
+      github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'donation-link')
+      && (github.event.action != 'labeled' || github.event.label.name == 'donation-link')
     runs-on: ubuntu-latest
     permissions:
       contents: write
