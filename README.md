@@ -55,22 +55,29 @@ found_on = "https://campus-clermont.net/soutenir/"
 | `match.streams` | Optional. Stream URLs **without** `http(s)://`: `host/path`. A trailing `*` matches every path that starts with it. |
 | `donate.url` | The station's donation page. |
 | `donate.found_on` | The page of the station's website that links to `donate.url`: the proof. The bot fills it in; by hand, give the page where you found the link. |
+| `donate.checked_by_hand` | **Maintainer only**, instead of `found_on`, when the website doesn't link to the page: how and when the link was checked. |
 
 ## What is accepted
 A wrong donation link sends listeners' money to someone else, so every link is checked before it
 reaches the app:
 
 * **The station's own website must link to it**, in the page's HTML: on its homepage or on one of
-  its pages (`found_on`). A link the website doesn't give, or only shows with JavaScript, is not
-  accepted for now.
+  its pages (`found_on`). For HelloAsso, `donate.url` is the form's page
+  (`https://www.helloasso.com/associations/<association>/formulaires/<n>`).
+* When the website doesn't give the link, the bot labels the issue *manual-check* instead. The
+  maintainer may check it another way (an e-mail from the station's address, the association
+  registry) and add it with `checked_by_hand`, which only the maintainer can write. The surest way
+  is still to ask the station to link the page from its website: the entry then becomes an ordinary
+  one.
 * `https://` only, no URL shortener, no tracking parameters. The domain is the station's own, or one
   of these donation platforms: HelloAsso, Liberapay, Ko-fi, Patreon, Tipeee, Open Collective,
   Donorbox. Other platforms, PayPal included, are not accepted for now.
 * Nothing is published without the maintainer merging it. The bot labels what needs a closer look:
   *new-station* (is `homepage`, taken from Radio-Browser, the official website?), *link-change* and
   *homepage-change*.
-* **Every day**, CI checks every link again. A link no longer found on `found_on`, or that no longer
-  answers, is left out of the published list at once, and comes back by itself as soon as the check
+* **Every day**, CI checks every link again (for a link checked by hand, only that it still
+  answers). A link no longer found on `found_on`, or that no longer answers, is left out of the
+  published list at once, and comes back by itself as soon as the check
   passes. An issue is opened after 7 days, or at once if the link no longer answers or now leads to
   another domain.
 * A station can ask for its entry to be changed or removed by opening an issue. A request sent from

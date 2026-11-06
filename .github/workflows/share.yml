@@ -37,16 +37,26 @@ jobs:
       - name: Read the issue and check the link
         id: issue
         run: |
-          if python3 scripts/from_issue.py "$GITHUB_EVENT_PATH" --summary summary.md > out.txt 2> errors.txt \
-            && python3 scripts/lint.py >> errors.txt 2>&1; then
+          code=0
+          python3 scripts/from_issue.py "$GITHUB_EVENT_PATH" --summary summary.md > out.txt 2> errors.txt || code=$?
+          if [ "$code" = 0 ] && python3 scripts/lint.py >> errors.txt 2>&1; then
             cat out.txt >> "$GITHUB_OUTPUT"
             echo "ok=true" >> "$GITHUB_OUTPUT"
+          elif [ "$code" = 2 ]; then
+            echo "ok=manual" >> "$GITHUB_OUTPUT"
           else
             echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Ask for a check by hand
+        if: steps.issue.outputs.ok == 'manual'
+        run: |
+          gh label create manual-check --color 5319e7 --description "The website doesn't give the link: the maintainer checks it by hand" --force
+          gh issue edit "$ISSUE" --add-label manual-check
+          gh issue comment "$ISSUE" --body-file errors.txt
+
       - name: Say what is wrong
-        if: steps.issue.outputs.ok != 'true'
+        if: steps.issue.outputs.ok == 'false'
         run: |
           {
             echo "The link can't be added yet:"

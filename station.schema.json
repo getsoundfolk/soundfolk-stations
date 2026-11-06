@@ -59,7 +59,8 @@
       "description": "The station's donation page.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["url", "found_on"],
+      "required": ["url"],
+      "oneOf": [{ "required": ["found_on"] }, { "required": ["checked_by_hand"] }],
       "properties": {
         "url": {
           "description": "The donation page: on the station's own domain or a platform of platforms.toml.",
@@ -72,6 +73,12 @@
           "type": "string",
           "pattern": "^https://",
           "maxLength": 500
+        },
+        "checked_by_hand": {
+          "description": "Maintainer only, when the station's website doesn't link to `url`: how and when the link was checked (an e-mail from the station's address, the association registry…).",
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 300
         }
       }
     }

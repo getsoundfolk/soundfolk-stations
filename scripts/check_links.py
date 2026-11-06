@@ -8,6 +8,9 @@ Usage (from anywhere; Python 3.11+, no dependencies):
       Checks every entry and writes the new status: which links are left out of the published list,
       and since when. `previous` may be missing or empty (first run).
 
+An entry checked by hand (`checked_by_hand` instead of `found_on`) has no page to read again: only
+`donate.url` is checked (gone, dead, redirect).
+
 A failure is one of:
   missing   `found_on` answers but no longer links to `donate.url` (moved, redesigned, removed)
   gone      `found_on` or `donate.url` answers 404 or 410
@@ -37,18 +40,20 @@ URGENT = {"dead", "redirect"}
 def check(entry: dict, allowed: list[str]) -> tuple[str, str] | None:
     """None when the link is fine, else (kind, reason)."""
     url = entry["donate"]["url"]
-    found_on = entry["donate"]["found_on"]
-    try:
-        page = fetch(found_on)
-    except FetchError as e:
-        return "dead", f"{found_on} does not answer: {e}"
-    if page.status in (404, 410):
-        return "gone", f"{found_on} answers {page.status}"
-    if page.status >= 400:
-        # 403, 429, 5xx: often a bot filter or a passing outage, not the station's doing.
-        return "missing", f"{found_on} answers {page.status}"
-    if not links_to(page, url):
-        return "missing", f"{found_on} no longer links to {url}"
+    found_on = entry["donate"].get("found_on")
+    # Checked by hand: there is no page to read again, only the link itself.
+    if found_on:
+        try:
+            page = fetch(found_on)
+        except FetchError as e:
+            return "dead", f"{found_on} does not answer: {e}"
+        if page.status in (404, 410):
+            return "gone", f"{found_on} answers {page.status}"
+        if page.status >= 400:
+            # 403, 429, 5xx: often a bot filter or a passing outage, not the station's doing.
+            return "missing", f"{found_on} answers {page.status}"
+        if not links_to(page, url):
+            return "missing", f"{found_on} no longer links to {url}"
     try:
         target = fetch(url, read_body=False)
     except FetchError as e:
@@ -74,7 +79,9 @@ def check_files(paths: list[str]) -> int:
             failed += 1
             print(f"FAIL  {name}: {result[1]}")
         else:
-            print(f"ok    {name}: {entry['donate']['found_on']} links to {entry['donate']['url']}")
+            proof = entry["donate"].get("found_on")
+            print(f"ok    {name}: " + (f"{proof} links to {entry['donate']['url']}" if proof else
+                                     f"{entry['donate']['url']} answers (checked by hand)"))
     return 1 if failed else 0
 
 

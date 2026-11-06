@@ -21,6 +21,7 @@ USER_AGENT = "Soundfolk-stations/1 (+https://github.com/getsoundfolk/soundfolk-s
 TIMEOUT = 20
 MAX_PAGE = 2 * 1024 * 1024
 MAX_URL = 500
+MAX_PROOF = 300
 
 SHORTENERS = {
     "bit.ly", "buff.ly", "cutt.ly", "goo.gl", "is.gd", "lnkd.in", "ow.ly", "rebrand.ly",
@@ -118,15 +119,27 @@ def entry_errors(entry: dict, allowed: list[str]) -> list[str]:
     donate = entry.get("donate", {})
     if not isinstance(donate, dict):
         return errors + ["`donate` must be a table: [donate] with `url` and `found_on`"]
-    for key in donate.keys() - {"url", "found_on"}:
+    for key in donate.keys() - {"url", "found_on", "checked_by_hand"}:
         errors.append(f"unknown field `donate.{key}`")
     url = donate.get("url", "")
-    found_on = donate.get("found_on", "")
     url_problems = url_errors(url, "`donate.url`")
-    errors += url_problems + url_errors(found_on, "`donate.found_on`")
-    if homepage.startswith("https://") and found_on.startswith("https://"):
-        if not on_domain(host(found_on), site(homepage)):
-            errors.append(f"`donate.found_on` must be on the station's website ({site(homepage)})")
+    if not url_problems and form_page(url) != url:
+        url_problems.append(f"`donate.url` must be the form's page: {form_page(url)}")
+    errors += url_problems
+    if ("found_on" in donate) == ("checked_by_hand" in donate):
+        errors.append("`donate` needs either `found_on` (the page of the station's website that links to "
+                      "`url`) or, added by the maintainer only, `checked_by_hand`")
+    elif "found_on" in donate:
+        found_on = donate["found_on"]
+        errors += url_errors(found_on, "`donate.found_on`")
+        if homepage.startswith("https://") and str(found_on).startswith("https://"):
+            if not on_domain(host(found_on), site(homepage)):
+                errors.append(f"`donate.found_on` must be on the station's website ({site(homepage)})")
+    else:
+        proof = donate["checked_by_hand"]
+        if not isinstance(proof, str) or not 10 <= len(proof.strip()) <= MAX_PROOF:
+            errors.append(f"`donate.checked_by_hand` says how and when the maintainer checked the link "
+                          f"(10 to {MAX_PROOF} characters)")
     if not url_problems and homepage.startswith("https://"):
         if not allowed_donation(url, homepage, allowed):
             errors.append(
@@ -180,8 +193,10 @@ def write_entry(path: Path, entry: dict) -> None:
         "",
         "[donate]",
         f"url = {toml_string(entry['donate']['url'])}",
-        f"found_on = {toml_string(entry['donate']['found_on'])}",
     ]
+    for key in ("found_on", "checked_by_hand"):
+        if key in entry["donate"]:
+            lines.append(f"{key} = {toml_string(entry['donate'][key])}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -250,6 +265,26 @@ def links(page: Fetched) -> list[tuple[str, str]]:
     return [(url, " ".join(text.split())) for url, text in parser.links]
 
 
+# A website embeds a HelloAsso form with a link to `…/formulaires/<n>/` plus a suffix: the same form.
+EMBEDDED = re.compile(r"/widget[a-z-]*$")
+
+
+def form_page(url: str) -> str:
+    """The HelloAsso form's page, the one listeners open, for a link to the same form embedded."""
+    if not on_domain(host(url), "helloasso.com"):
+        return url
+    parts = urlsplit(url)
+    return urlunsplit(parts._replace(path=EMBEDDED.sub("", parts.path.rstrip("/"))))
+
+
+def canonical(url: str) -> str:
+    url = normalize(url)
+    if on_domain(host(url), "helloasso.com"):
+        parts = urlsplit(url)
+        url = urlunsplit(parts._replace(path=EMBEDDED.sub("", parts.path), query=""))
+    return url
+
+
 def links_to(page: Fetched, url: str) -> bool:
-    target = normalize(url)
-    return any(normalize(link) == target for link, _ in links(page))
+    target = canonical(url)
+    return any(canonical(link) == target for link, _ in links(page))

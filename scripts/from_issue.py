@@ -5,12 +5,16 @@ Usage: python3 scripts/from_issue.py <event.json> [--summary <file.md>]   (from 
 
 Prints `id=<id>` and `change=new|link|homepage|same` for $GITHUB_OUTPUT, and writes what the
 maintainer must look at into the summary. Exits 1 with the reason on stderr when the issue can't be
-used. The issue body is untrusted: it is only parsed, checked, and written to that one file.
+used, 2 when the link is fine but the station's website doesn't give it: only the maintainer can
+then add it, checked by hand (`checked_by_hand`). The issue body is untrusted: it is only parsed,
+checked, and written to that one file.
 
 1. The station comes from Radio-Browser, by the UUID in the issue: name and, unless the issue gives
    one, website. An entry that already matches the UUID is updated in place (same id).
-2. The donation link must be found on the station's website: on its homepage, or on one of a few
+2. A HelloAsso link to an embedded form becomes the form's page.
+3. The donation link must be found on the station's website: on its homepage, or on one of a few
    pages of the same site whose link looks like a donation page. That page becomes `found_on`.
+   An entry checked by hand becomes an ordinary one as soon as the website gives the link.
 """
 
 import argparse
@@ -23,7 +27,7 @@ from urllib.parse import quote
 
 from common import (
     ID, STATIONS, UUID, FetchError, allowed_donation, entries, entry_errors, fetch, links, links_to, on_domain,
-    platforms, site,
+    platforms, site, form_page,
     url_errors, write_entry,
 )
 
@@ -128,6 +132,8 @@ def main() -> None:
         problems += url_errors(website, "The station website")
     if problems:
         fail("\n".join(problems))
+    # The form's page, the one listeners open, even if the issue gave the embedded form.
+    url = form_page(url)
 
     try:
         found = get_json(RADIO_BROWSER.format(quote(uuid)))
@@ -155,9 +161,18 @@ def main() -> None:
 
     found_on = find_link(website, url)
     if not found_on:
-        fail(f"The station's website ({website}) doesn't link to {url}, neither on its homepage nor on a "
-             "page that looks like a donation page. Soundfolk only shows links the station gives itself: "
-             "check the link, or fill in *Station website* if it isn't the right site.")
+        if existing and existing[1]["donate"].get("url") == url:
+            # Already in the list, checked by hand.
+            print(f"id={existing[0]}")
+            print("change=same")
+            return
+        print(f"The station's website ({website}) doesn't link to {url}, neither on its homepage nor on a "
+              "page that looks like a donation page.\n\n"
+              "The maintainer can check it by hand (for instance by writing to the station). If you know "
+              "the station, the surest way is to ask it to link this page from its website: edit this issue "
+              "once it does, and the link is added at once. If the website is not the station's, fill in "
+              "*Station website*.", file=sys.stderr)
+        sys.exit(2)
 
     if existing:
         station_id, before = existing

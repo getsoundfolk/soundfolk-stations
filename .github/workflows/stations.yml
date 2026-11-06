@@ -29,6 +29,19 @@ jobs:
           python-version: "3.12"
       - name: Repository rules
         run: python3 scripts/lint.py
+      - name: Only the maintainer adds `checked_by_hand`
+        if: github.event_name == 'pull_request'
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          MAINTAINER: raphaelh
+        run: |
+          if git diff origin/main...HEAD -- 'stations/*.toml' | grep -qE '^\+.*checked_by_hand'; then
+            if [ "$AUTHOR" != "$MAINTAINER" ]; then
+              echo "::error::checked_by_hand is for the maintainer only: give found_on, a page of the station's website that links to the donation page."
+              exit 1
+            fi
+            echo "Checked by hand, added by the maintainer."
+          fi
       - name: The station's website links to the donation page
         run: |
           mapfile -t changed < <(git diff --name-only --diff-filter=AM origin/main...HEAD -- 'stations/*.toml')
