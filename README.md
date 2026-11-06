@@ -2,13 +2,14 @@
 
 What the [Radio-Browser](https://www.radio-browser.info/) catalog doesn't say about a station, and
 [Soundfolk](https://github.com/getsoundfolk/soundfolk) wants to show: first of all **where to donate**
-to it, then whether it is ad-free or listener-supported.
+to it, then whether it is ad-free or listener-supported; and **curated lists** of stations.
 
 This repository is the shared list. Every copy of Soundfolk will download it (once a day), so **a
 donation link added here shows up in the player for every listener of that station**.
 
 > Work in progress: Soundfolk doesn't read this list yet. The list is published at
-> <https://getsoundfolk.github.io/soundfolk-stations/v1/stations.json>.
+> <https://getsoundfolk.github.io/soundfolk-stations/v1/stations.json>, the curated lists at
+> <https://getsoundfolk.github.io/soundfolk-stations/v1/lists.json>.
 
 ---
 
@@ -83,6 +84,50 @@ reaches the app:
 * A station can ask for its entry to be changed or removed by opening an issue. A request sent from
   the station's own domain, or matching its website, is taken as coming from the station.
 
+## Curated lists
+A list is a handful of Radio-Browser stations picked by someone, around a theme: community radios
+of a country, streams to work to, public broadcasters' music channels. Soundfolk shows each list as
+a row in Discover, with its title, its description and "by @login". One file per list,
+`lists/<id>.toml` (lowercase letters, digits and `-`; it can't change later):
+
+```toml
+#:schema ../list.schema.json
+schema = 1
+title = "Ambient to focus"
+description = "Ambient and downtempo streams with few voices, for working, reading or coding."
+curators = ["raphaelh"]
+checked = 2026-11-06
+use = ["focus", "calm"]
+genres = ["ambient"]
+
+stations = [
+  "960cf833-0601-11e8-ae97-52543be04c81",  # SomaFM Groove Salad (128k MP3)
+  "ae7aeb65-5a30-4848-8059-91b2bc2dcfd9",  # SomaFM Drone Zone (256k MP3)
+]
+```
+
+| Field | |
+|---|---|
+| `title` | At most 40 characters, in one language: the one of the list's listeners. Say what is in the list rather than a mood. |
+| `description` | One sentence, at most 140 characters, in the same language. |
+| `curators` | 1 to 3 GitHub logins, yours included. The first one gets the issues CI opens. |
+| `checked` | The date you last listened through the whole list. Never shown in the app; a year later, an issue asks you to review it again. |
+| `use` | 1 to 3 of `focus`, `calm`, `energy`, `discovery`, `shows` ([vocab.toml](vocab.toml)): what the list is put on for. |
+| `genres` | 0 to 3 genre ids from [vocab.toml](vocab.toml), only when they dominate the list. |
+| `stations` | 5 to 40 Radio-Browser UUIDs, in your order, each followed by a comment with the station's name. One UUID per station: when Radio-Browser lists it several times, pick the copy that works best. |
+
+Anything goes as long as the stations match the title and the description, whatever their network
+(every channel of one broadcaster is a fine list) and whether or not they air ads. The pull request
+shows each station's Radio-Browser name, country and whether its stream answers: check that each
+UUID is the station you meant. The country of the list is worked out from its stations.
+
+**Every day**, CI looks up every station again. A station gone from Radio-Browser, or whose stream
+no longer answers (from here and from Radio-Browser's own checkers), is left out of the published
+list, and comes back by itself once it answers again; the file doesn't change. The first curator gets
+an issue at once for a station gone from Radio-Browser (paste its new UUID), after 7 days for a
+stream that doesn't answer. Unanswered for 30 days, the maintainer fixes the list, takes it over or
+unpublishes it.
+
 ## Check locally
 Python 3.11 or later, nothing to install:
 
@@ -91,6 +136,9 @@ python3 scripts/lint.py                              # the rules, offline
 python3 scripts/check_links.py stations/<id>.toml    # the station's website links to the page
 python3 scripts/compile.py                           # writes site/v1/stations.json
 python3 scripts/add_copies.py                        # adds Radio-Browser's new copies of each station
+python3 scripts/check_lists.py lists/<id>.toml       # each station's Radio-Browser name, country, stream
+python3 scripts/check_lists.py --daily /dev/null     # writes site/v1/lists-status.json
+python3 scripts/compile_lists.py --status site/v1/lists-status.json   # writes site/v1/lists.json
 ```
 
 ## Licence

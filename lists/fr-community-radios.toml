@@ -1,0 +1,32 @@
+#:schema ../list.schema.json
+schema = 1
+title = "Radios associatives en France"
+description = "Des radios locales tenues par des associations en France, des vallées aux villes."
+curators = ["raphaelh"]
+checked = 2026-11-06
+use = ["discovery", "shows"]
+genres = []
+
+stations = [
+  "d1298c14-014d-40d7-8864-715c79d45b95",  # Fréquence 7
+  "ab30ca84-c228-4f57-8cac-816c69ef651d",  # RDWA
+  "0842377e-9c21-4567-a326-6303a48b0ea1",  # FPP Fréquence Paris Plurielle rfpp
+  "721741b1-738f-41ea-9bc0-47fcc99cf90b",  # Radio Campus Paris
+  "64a6fb26-a079-4eec-858e-c0ac27884ea8",  # Radio Campus Clermont-Ferrand
+  "e6639188-dc36-4441-ba83-4b6832a58c83",  # Radio grenouille
+  "41ca1b1f-23f0-4778-9dfe-bcbfea7e6049",  # Radio Canut
+  "33f9f2d0-206f-4f89-b78e-1c2863f40895",  # RADIO PRIMITIVE
+  "2a5dc8a9-be0f-461a-a33f-bf0709de5418",  # Radio Dio
+  "e14f27a9-edf0-47fc-9302-cc83c2d1c5eb",  # Radio Larzac
+  "32038781-351b-11e8-bb9b-52543be04c81",  # Radio Pikez !
+  "0eeb750f-40b2-44e8-ab43-4d881454bcd0",  # Radio Béton - Tours 93.6
+  "9615628c-0601-11e8-ae97-52543be04c81",  # Radio Zinzine
+  "fb71aa45-cf9f-4744-a4bc-e0b751e649c8",  # Radio Grésivaudan
+  "a2bfb4e2-d932-4888-b0c7-f444f4269897",  # Radio PFM
+]
+
+# Reserves (checked, not listed):
+#   "961a39f5-0601-11e8-ae97-52543be04c81",  # Cause Commune (Libre @ Toi)
+#   "a685d799-8ee0-4f8b-b6e0-77345b34863d",  # Radio Libertaire (France)
+#   "960d57bf-0601-11e8-ae97-52543be04c81",  # Radio Campus Lille
+#   "96109b22-0601-11e8-ae97-52543be04c81",  # Radio Galère

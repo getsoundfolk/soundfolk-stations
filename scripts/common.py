@@ -3,6 +3,7 @@
 Python 3.11+, standard library only.
 """
 
+import datetime
 import json
 import re
 import tomllib
@@ -15,8 +16,12 @@ from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit, parse_qsl
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIONS = ROOT / "stations"
+LISTS = ROOT / "lists"
 SCHEMA_LINE = "#:schema ../station.schema.json"
+LIST_SCHEMA_LINE = "#:schema ../list.schema.json"
 ID = re.compile(r"^[a-z0-9_-]{1,64}$")
+LIST_ID = re.compile(r"^[a-z0-9-]{1,64}$")
+LOGIN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
 UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 USER_AGENT = "Soundfolk-stations/1 (+https://github.com/getsoundfolk/soundfolk-stations)"
 TIMEOUT = 20
@@ -200,6 +205,93 @@ def write_entry(path: Path, entry: dict) -> None:
         if key in entry["donate"]:
             lines.append(f"{key} = {toml_string(entry['donate'][key])}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+# Curated lists.
+
+LIST_FIELDS = {"schema", "title", "description", "curators", "checked", "use", "genres", "stations"}
+
+
+def vocab() -> dict[str, list[str]]:
+    return tomllib.loads((ROOT / "vocab.toml").read_text(encoding="utf-8"))
+
+
+def list_errors(entry: dict, words: dict[str, list[str]]) -> list[str]:
+    """The rules of one list (the schema, plus what a schema can't say)."""
+    errors = []
+    for key in sorted(entry.keys() - LIST_FIELDS):
+        errors.append(f"unknown field `{key}`")
+    for key in sorted(LIST_FIELDS - entry.keys()):
+        errors.append(f"missing field `{key}`")
+    if entry.get("schema", 1) != 1:
+        errors.append("`schema` must be 1")
+    for key, most in (("title", 40), ("description", 140)):
+        value = entry.get(key, "")
+        if not isinstance(value, str) or not value.strip() or len(value) > most or value != value.strip():
+            errors.append(f"`{key}` must be a non-empty string of at most {most} characters, without spaces "
+                          "around it")
+        elif "\n" in value:
+            errors.append(f"`{key}` must be one line")
+
+    curators = entry.get("curators", [])
+    if not isinstance(curators, list) or not 1 <= len(curators) <= 3:
+        errors.append("`curators` lists 1 to 3 GitHub logins")
+    else:
+        for login in curators:
+            if not isinstance(login, str) or not LOGIN.fullmatch(login):
+                errors.append(f"`curators`: {login!r} is not a GitHub login")
+        if len({str(c).lower() for c in curators}) != len(curators):
+            errors.append("`curators`: a login is there twice")
+
+    checked = entry.get("checked")
+    if "checked" in entry and (not isinstance(checked, datetime.date) or isinstance(checked, datetime.datetime)):
+        errors.append("`checked` is a date without quotes: checked = 2026-11-06")
+    elif isinstance(checked, datetime.date) and checked > datetime.date.today() + datetime.timedelta(days=1):
+        # A day of slack: the curator's today may be tomorrow for CI, which runs on UTC.
+        errors.append("`checked` is in the future")
+
+    for key, low, high in (("use", 1, 3), ("genres", 0, 3)):
+        values = entry.get(key, [])
+        if not isinstance(values, list) or not low <= len(values) <= high:
+            errors.append(f"`{key}` lists {low} to {high} ids from vocab.toml")
+            continue
+        for value in values:
+            if value not in words[key]:
+                errors.append(f"`{key}`: {value!r} is not in vocab.toml ({', '.join(words[key])})")
+        if len(set(map(str, values))) != len(values):
+            errors.append(f"`{key}`: an id is there twice")
+
+    stations = entry.get("stations", [])
+    if not isinstance(stations, list) or not 5 <= len(stations) <= 40:
+        errors.append("`stations` lists 5 to 40 Radio-Browser UUIDs")
+    else:
+        seen = set()
+        for uuid in stations:
+            if not isinstance(uuid, str) or not UUID.fullmatch(uuid):
+                errors.append(f"`stations`: {uuid!r} is not a lowercase Radio-Browser UUID")
+            elif uuid in seen:
+                errors.append(f"`stations`: {uuid} is there twice")
+            seen.add(uuid)
+    return errors
+
+
+def lists() -> list[tuple[str, dict]]:
+    """Every list that parses, by id."""
+    found = []
+    for path in sorted(LISTS.glob("*.toml")):
+        entry, _ = load(path)
+        if entry is not None:
+            found.append((path.stem, entry))
+    return found
+
+
+def stream_key(url: str) -> str:
+    """A stream as the app matches it: `host[:port]/path`, lowercase host, no scheme or query."""
+    parts = urlsplit(url.strip())
+    netloc = (parts.hostname or "").lower().rstrip(".")
+    if parts.port and parts.port not in (80, 443):
+        netloc += f":{parts.port}"
+    return netloc + (parts.path or "/")
 
 
 # Reading pages.

@@ -52,6 +52,43 @@ jobs:
           fi
       - name: Compile the list
         run: python3 scripts/compile.py
+      - name: A new list is written by its curators
+        if: github.event_name == 'pull_request'
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          MAINTAINER: raphaelh
+        run: |
+          python3 - <<'PY'
+          import os, subprocess, tomllib
+          author, maintainer = os.environ["AUTHOR"].lower(), os.environ["MAINTAINER"].lower()
+          diff = ["git", "diff", "--name-status", "origin/main...HEAD", "--", "lists/*.toml"]
+          failed = False
+          for line in subprocess.run(diff, capture_output=True, text=True, check=True).stdout.splitlines():
+              status, path = line.split("\t")[0], line.split("\t")[-1]
+              if status.startswith("D"):
+                  continue
+              curators = [c.lower() for c in tomllib.load(open(path, "rb")).get("curators", [])]
+              if author in curators or author == maintainer:
+                  continue
+              if status.startswith("A"):
+                  print(f"::error file={path}::A new list names its author among `curators`.")
+                  failed = True
+              else:
+                  print(f"::warning file={path}::{author} is not a curator of this list: the maintainer asks them.")
+          raise SystemExit(1 if failed else 0)
+          PY
+      - name: The stations of the lists that changed
+        run: |
+          mapfile -t changed < <(git diff --name-only --diff-filter=AM origin/main...HEAD -- 'lists/*.toml')
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "No list changed."
+          else
+            python3 scripts/check_lists.py "${changed[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Compile the lists
+        run: |
+          python3 scripts/check_lists.py --daily /dev/null -o "$RUNNER_TEMP/lists-status.json"
+          python3 scripts/compile_lists.py --status "$RUNNER_TEMP/lists-status.json" -o "$RUNNER_TEMP/lists.json"
 
   # main, every push and every day: check every link, publish the list without the ones that fail.
   publish:
@@ -82,25 +119,34 @@ jobs:
           python3 scripts/check_links.py --daily previous.json -o site/v1/status.json --issues issues.json \
             | tee check.txt
           { echo '## Link check'; echo; echo '```'; cat check.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check every list
+        run: |
+          curl -fsS "$PAGES/v1/lists-status.json" -o previous-lists.json || echo '{}' > previous-lists.json
+          python3 scripts/check_lists.py --daily previous-lists.json -o site/v1/lists-status.json \
+            --issues list-issues.json | tee check-lists.txt
+          { echo '## List check'; echo; echo '```'; cat check-lists.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Compile the list
         run: |
           python3 scripts/compile.py --status site/v1/status.json -o site/v1/stations.json
-          cp station.schema.json site/v1/
+          python3 scripts/compile_lists.py --status site/v1/lists-status.json -o site/v1/lists.json
+          cp station.schema.json list.schema.json site/v1/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
       - id: deploy
         uses: actions/deploy-pages@v4
-      - name: Open issues for broken links
+      - name: Open issues for broken links and lists
         run: |
           gh label create broken-link --color d73a4a --description "Left out of the published list" --force
-          jq -c '.[]' issues.json | while read -r issue; do
+          gh label create list-review --color 0e8a16 --description "Yearly review of a list" --force
+          jq -s -c 'add | .[]' issues.json list-issues.json | while read -r issue; do
             title=$(jq -r .title <<< "$issue")
+            label=$(jq -r '.label // "broken-link"' <<< "$issue")
             jq -r .body <<< "$issue" > body.md
-            open=$(gh issue list --label broken-link --state open --search "\"$title\" in:title" \
+            open=$(gh issue list --label "$label" --state open --search "\"$title\" in:title" \
               --json title --jq "map(select(.title == \"$title\")) | length")
             if [ "$open" = "0" ]; then
-              gh issue create --title "$title" --label broken-link --body-file body.md
+              gh issue create --title "$title" --label "$label" --body-file body.md
             fi
           done

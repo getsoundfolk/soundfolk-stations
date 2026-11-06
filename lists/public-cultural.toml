@@ -1,0 +1,30 @@
+#:schema ../list.schema.json
+schema = 1
+title = "Public radio music channels"
+description = "Music channels of public broadcasters, from Paris to Helsinki and Montréal: classical, jazz, eclectic."
+curators = ["raphaelh"]
+checked = 2026-11-06
+use = ["discovery", "calm"]
+genres = ["classical", "jazz"]
+
+stations = [
+  "932eb148-e6f6-11e9-a96c-52543be04c81",  # FIP
+  "5e992e1e-e6ef-11e9-a96c-52543be04c81",  # France Musique
+  "960ef421-0601-11e8-ae97-52543be04c81",  # Klara
+  "9619cb9f-0601-11e8-ae97-52543be04c81",  # RTBF Musiq3
+  "9c2f41c2-86bb-11e8-aa66-52543be04c81",  # NPO Radio 4
+  "961ac56b-0601-11e8-ae97-52543be04c81",  # Radio Swiss Jazz
+  "96077079-0601-11e8-ae97-52543be04c81",  # Radio Swiss Classic German
+  "29010f42-faef-4a9e-b15c-3ad1613b45cb",  # BR-Klassik
+  "0e2e2f4a-c8aa-11e9-8502-52543be04c81",  # Rai Radio Classica Filodiffusione
+  "da69613a-bae9-4492-aab9-fb96b48249b5",  # Radio Clásica
+  "c96b0b99-6dc6-4b76-9971-b48a55c628ca",  # RTÉ lyric fm
+  "38fbe434-aa0d-4f31-a16d-002191c78193",  # NRK Klassisk Radio
+  "960f5af4-0601-11e8-ae97-52543be04c81",  # DR P2
+  "287a4851-de0c-4184-8255-b435d6b62e0b",  # Sveriges Radio - P2 Klassiskt
+  "22c402d1-2a7f-4713-8e2b-646070026dba",  # Yle Klassinen
+  "02c6e041-e8fb-4734-92fb-f22250073044",  # ČRo D-dur
+  "961d7d8c-0601-11e8-ae97-52543be04c81",  # Bartók Rádió
+  "0a488605-22d8-4d0c-9268-8cc2f944b597",  # ICI Musique Classique - Montreal, QC
+  "30928802-8f3b-4083-94ee-7cb3c6c41790",  # WQXR 105.9 FM
+]

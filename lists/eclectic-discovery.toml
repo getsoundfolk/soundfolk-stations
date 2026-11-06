@@ -1,0 +1,24 @@
+#:schema ../list.schema.json
+schema = 1
+title = "Independent stations"
+description = "Independent stations programmed by people, not algorithms, across continents."
+curators = ["raphaelh"]
+checked = 2026-11-06
+use = ["discovery"]
+genres = []
+
+stations = [
+  "9617a958-0601-11e8-ae97-52543be04c81",  # Radio Paradise Main Mix (EU) 320k AAC
+  "6a7508a9-27ab-11e8-91bf-52543be04c81",  # KEXP 90.3 Seattle, WA
+  "9618344a-0601-11e8-ae97-52543be04c81",  # WFMU 91.1 East Orange, NJ
+  "960dd7a5-0601-11e8-ae97-52543be04c81",  # WXPN 88.5 Philadelphia, PA
+  "18e31f25-53c8-4213-a1ec-dccc0443a788",  # KCRW ECLECTIC 24
+  "0bb84fe1-e899-11e9-a96c-52543be04c81",  # dublab
+  "961e6cac-0601-11e8-ae97-52543be04c81",  # NTS Radio 1
+  "1651c32f-55d8-4429-995d-872ea0dcf520",  # Worldwide FM
+  "31cc09a1-4b26-11e8-9b06-52543be04c81",  # Cashmere Radio
+  "79722e21-326a-4de1-8062-246f00c03ed9",  # Le Mellotron
+  "960a0f41-0601-11e8-ae97-52543be04c81",  # Radio Meuh
+  "960a4ad1-0601-11e8-ae97-52543be04c81",  # WWOZ 90.7 New Orleans, LA
+  "a1c99f81-f8d1-4f6d-b9e3-714763a72b7d",  # Radio Raheem
+]

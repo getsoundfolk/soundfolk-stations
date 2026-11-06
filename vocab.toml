@@ -1,0 +1,31 @@
+# The ids a list may use in `use` and `genres`. Soundfolk translates them: an id added here needs a
+# label in the app, so a new id is a pull request for the maintainer, like a list.
+
+# What a listener puts the list on for, not what is in the stream.
+#   focus      work, study, code: few or no voices
+#   calm       unwind, read, end of the day, sleep
+#   energy     sport, chores, commuting: a steady tempo
+#   discovery  hearing what one does not know yet
+#   shows      hosts, programmes, local life, with music between them; not talk only
+use = ["focus", "calm", "energy", "discovery", "shows"]
+
+# The genre families of the app's genre filter (soundfolk, docs/08-search-filters.md §3.1). A list
+# names a genre only when it dominates; most lists name none.
+genres = [
+  "ambient",
+  "blues",
+  "classical",
+  "country",
+  "electronic",
+  "folk",
+  "hip-hop",
+  "jazz",
+  "latin",
+  "lofi",
+  "metal",
+  "pop",
+  "reggae",
+  "rock",
+  "soul",
+  "world",
+]

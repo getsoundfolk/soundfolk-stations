@@ -1,0 +1,26 @@
+#:schema ../list.schema.json
+schema = 1
+title = "Ambient to focus"
+description = "Ambient and downtempo streams with few voices, for working, reading or coding."
+curators = ["raphaelh"]
+checked = 2026-11-06
+use = ["focus", "calm"]
+genres = ["ambient"]
+
+stations = [
+  "960cf833-0601-11e8-ae97-52543be04c81",  # SomaFM Groove Salad (128k MP3)
+  "ae7aeb65-5a30-4848-8059-91b2bc2dcfd9",  # SomaFM Drone Zone (256k MP3)
+  "a807ecc5-8410-4704-bac4-aed64ba76742",  # SomaFM Deep Space One (128k MP3)
+  "83accca7-b878-419d-a506-3d21ef2f250f",  # SomaFM Synphaera Radio
+  "961fa288-0601-11e8-ae97-52543be04c81",  # Ambient Sleeping Pill
+  "9609ed67-0601-11e8-ae97-52543be04c81",  # Cryosleep
+  "960c36e6-0601-11e8-ae97-52543be04c81",  # Echoes of Bluemars
+  "d5468df4-e6d0-11e9-a96c-52543be04c81",  # Slow Focus | NTS
+  "961aeb3b-0601-11e8-ae97-52543be04c81",  # Ambient Modern
+  "ab2208bf-6f70-443e-ad11-73f594b2629f",  # Planet Ambi HD
+  "9067dc39-4bf4-4364-bd6b-8020cff3e15d",  # Nightride FM - Chillsynth
+  "c81f0dfe-0497-4c53-b8a0-36e8494ee207",  # Low Key - Infinite Mixtapes | NTS
+]
+
+# Reserve: answers "ICY 200 OK" (Shoutcast v1), which hyper (reqwest) most likely refuses; not tried in the app yet.
+#   "96466522-0601-11e8-ae97-52543be04c81",  # Radio Caprice - Drone Ambient
