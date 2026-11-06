@@ -1,0 +1,9 @@
+#:schema ../station.schema.json
+schema = 1
+name = "Cause Commune (Libre @ Toi)"
+homepage = "https://cause-commune.fm/"
+match = { stations = ["961a39f5-0601-11e8-ae97-52543be04c81"] }
+
+[donate]
+url = "https://www.helloasso.com/associations/libre-a-toi/formulaires/1"
+found_on = "https://cause-commune.fm/soutenir"

@@ -1,0 +1,9 @@
+#:schema ../station.schema.json
+schema = 1
+name = "Arvorig FM"
+homepage = "https://arvorigfm.bzh/"
+match = { stations = ["7ca3cbaf-8980-46ed-9565-922bb5dd97e6"] }
+
+[donate]
+url = "https://www.helloasso.com/associations/ar-skinou-arvorig-fm/formulaires/1"
+checked_by_hand = "Given by the maintainer on 2026-11-06. The website (la-radio/) mentions donations to the association without linking them."

@@ -1,0 +1,9 @@
+#:schema ../station.schema.json
+schema = 1
+name = "Radio PFM"
+homepage = "https://www.radiopfm.com/"
+match = { stations = ["a2bfb4e2-d932-4888-b0c7-f444f4269897"] }
+
+[donate]
+url = "https://www.helloasso.com/associations/media-pfm/formulaires/1"
+found_on = "https://www.radiopfm.com/"
