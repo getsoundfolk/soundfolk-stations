@@ -3,7 +3,7 @@
 
 Usage: python3 scripts/from_issue.py <event.json> [--summary <file.md>]   (from the repository root)
 
-Prints `id=<id>` and `change=new|link|homepage|same` for $GITHUB_OUTPUT, and writes what the
+Prints `id=<id>` and `change=new|link|homepage|copies|same` for $GITHUB_OUTPUT, and writes what the
 maintainer must look at into the summary. Exits 1 with the reason on stderr when the issue can't be
 used, 2 when the link is fine but the station's website doesn't give it: only the maintainer can
 then add it, checked by hand (`checked_by_hand`). The issue body is untrusted: it is only parsed,
@@ -15,6 +15,8 @@ checked, and written to that one file.
 3. The donation link must be found on the station's website: on its homepage, or on one of a few
    pages of the same site whose link looks like a donation page. That page becomes `found_on`.
    An entry checked by hand becomes an ordinary one as soon as the website gives the link.
+4. Radio-Browser's other copies of the station (same name, website on the same domain) are added to
+   `match.stations`: the app may show any of them.
 """
 
 import argparse
@@ -26,12 +28,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 from common import (
-    ID, STATIONS, UUID, FetchError, allowed_donation, entries, entry_errors, fetch, links, links_to, on_domain,
-    platforms, site, form_page,
-    url_errors, write_entry,
+    ID, STATIONS, UUID, FetchError, allowed_donation, copies, entries, entry_errors, fetch, form_page, links,
+    links_to, on_domain, platforms, radio_browser, site, url_errors, write_entry,
 )
 
-RADIO_BROWSER = "https://all.api.radio-browser.info/json/stations/byuuid/{}"
 RECIPES = "https://getsoundfolk.github.io/soundfolk-recipes/v1/recipes.json"
 MAX_PAGES = 10
 DONATION_WORDS = re.compile(
@@ -136,8 +136,8 @@ def main() -> None:
     url = form_page(url)
 
     try:
-        found = get_json(RADIO_BROWSER.format(quote(uuid)))
-    except (FetchError, ValueError) as e:
+        found = radio_browser(f"byuuid/{quote(uuid)}")
+    except FetchError as e:
         fail(f"Radio-Browser can't be reached right now ({e}): edit the issue later to try again.")
     if not found:
         fail(f"Radio-Browser has no station {uuid}.")
@@ -193,6 +193,16 @@ def main() -> None:
             "match": {"stations": [uuid]},
             "donate": {"url": url, "found_on": found_on},
         }
+    # Radio-Browser's other copies of the station (same name, same website): the app may show any.
+    try:
+        found_copies = copies(station.get("name") or entry["name"], entry["homepage"])
+    except FetchError:
+        found_copies = []
+    taken = {u for i, e in entries() if i != station_id for u in e.get("match", {}).get("stations", [])}
+    known = list(entry["match"]["stations"])
+    added = [u for u in found_copies if u not in known and u not in taken]
+    entry["match"] = {**entry["match"], "stations": known + added}
+
     if not ID.match(station_id):
         fail(f"Can't make a valid id from {station_id!r}: a maintainer will add it by hand.")
 
@@ -206,6 +216,8 @@ def main() -> None:
         change = "homepage"
     elif before["donate"]["url"] != entry["donate"]["url"]:
         change = "link"
+    elif added:
+        change = "copies"
     else:
         change = "same"
 
@@ -224,6 +236,10 @@ def main() -> None:
         if change in ("link", "homepage") and before["donate"]["url"] != url:
             lines.append(f"**The donation link changes:** {before['donate']['url']} → {url}.")
         lines.append(f"**Found on the station's website:** {found_on} links to {url}.")
+        if added:
+            listed = ", ".join(f"[`{u}`](https://www.radio-browser.info/history/{u})" for u in added)
+            lines.append(f"**Other copies in Radio-Browser** (same name, same website), added to `match.stations`: "
+                         f"{listed}.")
         args.summary.write_text("\n\n".join(lines) + "\n", encoding="utf-8")
 
     print(f"id={station_id}")

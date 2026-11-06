@@ -6,11 +6,12 @@ Python 3.11+, standard library only.
 import json
 import re
 import tomllib
+import unicodedata
 import urllib.error
 import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urljoin, urlsplit, urlunsplit, parse_qsl
+from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit, parse_qsl
 
 ROOT = Path(__file__).resolve().parent.parent
 STATIONS = ROOT / "stations"
@@ -22,6 +23,7 @@ TIMEOUT = 20
 MAX_PAGE = 2 * 1024 * 1024
 MAX_URL = 500
 MAX_PROOF = 300
+RADIO_BROWSER = "https://all.api.radio-browser.info/json/stations/"
 
 SHORTENERS = {
     "bit.ly", "buff.ly", "cutt.ly", "goo.gl", "is.gd", "lnkd.in", "ow.ly", "rebrand.ly",
@@ -288,3 +290,38 @@ def canonical(url: str) -> str:
 def links_to(page: Fetched, url: str) -> bool:
     target = canonical(url)
     return any(canonical(link) == target for link, _ in links(page))
+
+
+# Radio-Browser.
+
+def radio_browser(path: str, **query) -> list[dict]:
+    url = RADIO_BROWSER + path + (f"?{urlencode(query)}" if query else "")
+    page = fetch(url)
+    if page.status != 200:
+        raise FetchError(f"Radio-Browser answered {page.status}")
+    try:
+        return json.loads(page.body)
+    except ValueError as e:
+        raise FetchError(f"Radio-Browser sent something else than JSON: {e}") from e
+
+
+def name_key(name: str) -> str:
+    """A name without case, accents, spaces or punctuation: `Radio  Zinzine!` is `radiozinzine`."""
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]", "", ascii_name.lower())
+
+
+def copies(name: str, homepage: str) -> list[str]:
+    """The UUIDs of every Radio-Browser station with this name and a website on the same domain.
+
+    Radio-Browser often has several copies of one station (added by different people, one per
+    stream). The app shows any of them, so the entry must match them all. Same name only: a
+    station's other channels ("Radio X Jazz") are other stations, added by hand if they share the
+    donation page.
+    """
+    key, domain = name_key(name), site(homepage)
+    found = radio_browser("search", name=name, limit=200, hidebroken="false")
+    return sorted(
+        s["stationuuid"] for s in found
+        if name_key(s.get("name") or "") == key and s.get("homepage") and site(s["homepage"]) == domain
+    )

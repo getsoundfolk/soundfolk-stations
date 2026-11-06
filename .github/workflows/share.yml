@@ -90,10 +90,12 @@ jobs:
           case "$CHANGE" in
             new) label=new-station ;;
             homepage) label=homepage-change ;;
+            copies) label=more-copies ;;
             *) label=link-change ;;
           esac
           gh label create new-station --color 0e8a16 --description "A station not in the list yet" --force
           gh label create link-change --color fbca04 --description "Changes a donation link: compare both pages" --force
+          gh label create more-copies --color c5def5 --description "Adds Radio-Browser copies of a station already listed" --force
           gh label create homepage-change --color d93f0b --description "Changes the station's website: check it is official" --force
 
           git config user.name "github-actions[bot]"

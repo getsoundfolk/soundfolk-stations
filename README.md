@@ -51,7 +51,7 @@ found_on = "https://campus-clermont.net/soutenir/"
 | `schema` | Always `1` for now. |
 | `name` | The station's name, for people reading the file. |
 | `homepage` | The station's official website. The donation link is checked against it, never against the website listed in Radio-Browser, which anyone can edit. |
-| `match.stations` | **Required.** Radio-Browser station UUIDs. Stations missing from Radio-Browser are not accepted for now. |
+| `match.stations` | **Required.** Radio-Browser station UUIDs, every copy of the station: Radio-Browser often lists one station several times, and Soundfolk may show any of them. The bot adds the copies with the same name and a website on the same domain. Stations missing from Radio-Browser are not accepted for now. |
 | `match.streams` | Optional. Stream URLs **without** `http(s)://`: `host/path`. A trailing `*` matches every path that starts with it. |
 | `donate.url` | The station's donation page. |
 | `donate.found_on` | The page of the station's website that links to `donate.url`: the proof. The bot fills it in; by hand, give the page where you found the link. |
@@ -90,6 +90,7 @@ Python 3.11 or later, nothing to install:
 python3 scripts/lint.py                              # the rules, offline
 python3 scripts/check_links.py stations/<id>.toml    # the station's website links to the page
 python3 scripts/compile.py                           # writes site/v1/stations.json
+python3 scripts/add_copies.py                        # adds Radio-Browser's new copies of each station
 ```
 
 ## Licence
