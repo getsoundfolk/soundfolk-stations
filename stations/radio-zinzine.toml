@@ -1,0 +1,9 @@
+#:schema ../station.schema.json
+schema = 1
+name = "Radio Zinzine"
+homepage = "https://radiozinzine.org/"
+match = { stations = ["9615628c-0601-11e8-ae97-52543be04c81"] }
+
+[donate]
+url = "https://www.helloasso.com/associations/association-radio-zinzine/formulaires/1"
+found_on = "https://radiozinzine.org/"
