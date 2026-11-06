@@ -2,7 +2,7 @@
 schema = 1
 name = "Cause Commune (Libre @ Toi)"
 homepage = "https://cause-commune.fm/"
-match = { stations = ["961a39f5-0601-11e8-ae97-52543be04c81"] }
+match = { stations = ["961a39f5-0601-11e8-ae97-52543be04c81", "961a2e42-0601-11e8-ae97-52543be04c81"] }
 
 [donate]
 url = "https://www.helloasso.com/associations/libre-a-toi/formulaires/1"

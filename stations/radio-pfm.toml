@@ -2,7 +2,7 @@
 schema = 1
 name = "Radio PFM"
 homepage = "https://www.radiopfm.com/"
-match = { stations = ["a2bfb4e2-d932-4888-b0c7-f444f4269897"] }
+match = { stations = ["a2bfb4e2-d932-4888-b0c7-f444f4269897", "71557429-6c6f-4fd4-b0f3-15773a1dcd87"] }
 
 [donate]
 url = "https://www.helloasso.com/associations/media-pfm/formulaires/1"
