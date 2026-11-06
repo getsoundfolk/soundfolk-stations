@@ -1,0 +1,16 @@
+Soundfolk stations
+
+The station entries in this repository (the files in `stations/`, as a database) are made available
+under the Open Database License 1.0: https://opendatacommons.org/licenses/odbl/1-0/
+
+Any rights in individual contents of the database are licensed under the Database Contents
+License 1.0: https://opendatacommons.org/licenses/dbcl/1-0/
+
+The published list (`stations.json`, compiled from `stations/`) is the same database under the same
+licences.
+
+Not covered by these licences:
+* The schema, and the tooling in `scripts/` and `.github/`: Mozilla Public License 2.0, like the
+  Soundfolk app (https://github.com/getsoundfolk/soundfolk).
+* Logos, names and trademarks of the stations, and the pages the entries link to: they belong to
+  their respective owners.
