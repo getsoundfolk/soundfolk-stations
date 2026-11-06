@@ -21,38 +21,47 @@ You need a GitHub account. No git or command line.
    player, which fills in the station for you), paste the link, tick the licence box and submit.
 3. A bot checks the link and opens a pull request, or says on the issue what is wrong.
 
-Once a maintainer merges it, every copy of Soundfolk gets the link within a day.
+Once the maintainer merges it, every copy of Soundfolk gets the link within a day.
 
 ### Or by hand, with a pull request
 One file per station, `stations/<id>.toml` (lowercase letters, digits, `-` and `_`, named after the
 station; it can't change later):
 
 ```toml
+#:schema ../station.schema.json
+schema = 1
 name = "Radio Campus Clermont-Ferrand"
 homepage = "https://campus-clermont.net/"
 match = { stations = ["<Radio-Browser UUID>"], streams = ["live.radio-campus.org:8002/clermont-ferrand"] }
-donate = "https://www.helloasso.com/associations/…"
+
+[donate]
+url = "https://www.helloasso.com/associations/…"
+found_on = "https://campus-clermont.net/soutenir/"
 ```
 
 | Field | |
 |---|---|
-| `match.stations` | Radio-Browser station UUIDs. Better than streams, which change. Give both when you can. |
-| `match.streams` | Stream URLs **without** `http(s)://`: `host/path`. A trailing `*` matches every path that starts with it. |
-| `homepage` | The station's website: the page the donation link is checked against. |
-| `donate` | The station's donation page. |
+| `schema` | Always `1` for now. |
+| `name` | The station's name, for people reading the file. |
+| `homepage` | The station's official website. The donation link is checked against it, never against the website listed in Radio-Browser, which anyone can edit. |
+| `match.stations` | **Required.** Radio-Browser station UUIDs. Stations missing from Radio-Browser are not accepted for now. |
+| `match.streams` | Optional. Stream URLs **without** `http(s)://`: `host/path`. A trailing `*` matches every path that starts with it. |
+| `donate.url` | The station's donation page. |
+| `donate.found_on` | The page of the station's website that links to `donate.url`: the proof. The bot fills it in; by hand, give the page where you found the link. |
 
 ## What is accepted
 A wrong donation link sends listeners' money to someone else, so every link is checked before it
 reaches the app:
 
-* **The station's own website must link to it.** CI reads the homepage (and its obvious support
-  pages) and looks for the link. Found: the pull request is marked *verified*. Not found: a
+* **The station's own website must link to it.** CI reads `found_on`, on the same domain as
+  `homepage`, and looks for the link. Found: the pull request is marked *verified*. Not found: the
   maintainer checks it by hand, and may ask the station.
-* `https://` only, no URL shortener, no tracking parameters. The domain is the station's own, or a
-  known donation platform (HelloAsso, Liberapay, Ko-fi, Patreon, Tipeee, Open Collective…).
-* **Changing an existing link** is never verified automatically: a maintainer always compares the
+* `https://` only, no URL shortener, no tracking parameters. The domain is the station's own, or one
+  of these donation platforms: HelloAsso, Liberapay, Ko-fi, Patreon, Tipeee, Open Collective,
+  Donorbox. Other platforms, PayPal included, are not accepted for now.
+* **Changing an existing link** is never verified automatically: the maintainer always compares the
   old and new pages.
-* Nothing is published without a maintainer merging it.
+* Nothing is published without the maintainer merging it.
 * A station can ask for its entry to be changed or removed by opening an issue. A request sent from
   the station's own domain, or matching its website, is taken as coming from the station.
 
