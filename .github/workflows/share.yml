@@ -1,0 +1,110 @@
+# Turns an "Add a donation link" issue (usually opened from Soundfolk) into a pull request.
+#
+# The issue body is untrusted: scripts/from_issue.py only parses it and writes stations/<id>.toml,
+# and it never reaches a shell command line. This workflow runs the default branch's scripts, never
+# the issue's.
+name: share
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions: {}
+
+concurrency:
+  group: share-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  share:
+    if: github.event.issue.state == 'open' && contains(github.event.issue.labels.*.name, 'donation-link')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+      BRANCH: share/issue-${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read the issue and check the link
+        id: issue
+        run: |
+          if python3 scripts/from_issue.py "$GITHUB_EVENT_PATH" --summary summary.md > out.txt 2> errors.txt \
+            && python3 scripts/lint.py >> errors.txt 2>&1; then
+            cat out.txt >> "$GITHUB_OUTPUT"
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Say what is wrong
+        if: steps.issue.outputs.ok != 'true'
+        run: |
+          {
+            echo "The link can't be added yet:"
+            echo
+            echo '```'
+            cat errors.txt
+            echo '```'
+            echo
+            echo "Edit this issue to try again: the checks run on every edit."
+          } > comment.md
+          gh issue comment "$ISSUE" --body-file comment.md
+          exit 1
+
+      - name: Nothing changes
+        if: steps.issue.outputs.ok == 'true' && steps.issue.outputs.change == 'same'
+        run: |
+          gh issue comment "$ISSUE" --body "Thanks! This link is already the one in \`stations/${{ steps.issue.outputs.id }}.toml\`."
+          gh issue close "$ISSUE"
+
+      - name: Open or update the pull request
+        if: steps.issue.outputs.ok == 'true' && steps.issue.outputs.change != 'same'
+        env:
+          ID: ${{ steps.issue.outputs.id }}
+          CHANGE: ${{ steps.issue.outputs.change }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+          AUTHOR_ID: ${{ github.event.issue.user.id }}
+        run: |
+          case "$CHANGE" in
+            new) label=new-station ;;
+            homepage) label=homepage-change ;;
+            *) label=link-change ;;
+          esac
+          gh label create new-station --color 0e8a16 --description "A station not in the list yet" --force
+          gh label create link-change --color fbca04 --description "Changes a donation link: compare both pages" --force
+          gh label create homepage-change --color d93f0b --description "Changes the station's website: check it is official" --force
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add stations
+          git commit -q --author "$AUTHOR <$AUTHOR_ID+$AUTHOR@users.noreply.github.com>" \
+            -m "stations: $ID" -m "Shared in #$ISSUE."
+          git push -f origin "$BRANCH"
+
+          { cat summary.md; echo; printf 'Shared by @%s.\n\nCloses #%s\n' "$AUTHOR" "$ISSUE"; } > body.md
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$pr" ]; then
+            if url=$(gh pr create --head "$BRANCH" --title "stations: $ID" --body-file body.md --label "$label"); then
+              gh issue comment "$ISSUE" --body "Thanks! The station's website links to this page: $url"
+            else
+              # Actions may not be allowed to open pull requests (organization setting): the
+              # maintainer opens it from the branch, prefilled.
+              compare="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/main...$BRANCH?expand=1"
+              gh issue comment "$ISSUE" --body "Thanks! The link passes its checks and is ready on \`$BRANCH\`. The maintainer will open the pull request: $compare"
+            fi
+          else
+            gh pr edit "$pr" --body-file body.md --add-label "$label"
+            gh issue comment "$ISSUE" --body "Updated #$pr with the edited issue."
+          fi
+          # Pull requests opened with this workflow's token don't trigger workflows: run the checks.
+          gh workflow run stations.yml --ref "$BRANCH"

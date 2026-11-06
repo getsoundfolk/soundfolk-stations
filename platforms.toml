@@ -1,0 +1,12 @@
+# Donation platforms a `donate.url` may point to, besides the station's own website.
+# A subdomain of a listed domain is accepted (www.helloasso.com).
+# Maintainer only (see .github/CODEOWNERS): a domain added here is trusted for every station.
+domains = [
+  "helloasso.com",
+  "liberapay.com",
+  "ko-fi.com",
+  "patreon.com",
+  "tipeee.com",
+  "opencollective.com",
+  "donorbox.org",
+]

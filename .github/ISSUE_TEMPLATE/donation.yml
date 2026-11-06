@@ -1,0 +1,39 @@
+name: Add a donation link
+description: Usually opened by Soundfolk (ⓘ › Suggest a donation link). A bot turns it into a pull request.
+title: "Donation link: "
+labels: [donation-link]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Give the station and its donation page. A bot checks that the station's own website links to
+        that page and opens a pull request, or says here what is wrong. Edit the issue to try again.
+  - type: input
+    id: station
+    attributes:
+      label: Station
+      description: Its Radio-Browser UUID, or its link on radio-browser.info. Soundfolk fills it in.
+      placeholder: https://www.radio-browser.info/history/00000000-0000-0000-0000-000000000000
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Donation link
+      description: The station's donation page, as linked from its website ("Soutenir", "Faire un don", "Support us"…). Without tracking parameters.
+      placeholder: https://www.helloasso.com/associations/…
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Station website
+      description: Only if the website Radio-Browser gives for this station is wrong or missing.
+      placeholder: https://…
+  - type: checkboxes
+    id: licence
+    attributes:
+      label: Licence
+      options:
+        - label: I agree that this entry is published under the ODbL 1.0 / DbCL 1.0 (see LICENSE).
+          required: true

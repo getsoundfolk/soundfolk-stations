@@ -1,0 +1,93 @@
+name: stations
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 4 * * *" # the daily link check
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Pull requests (and branches the share workflow pushed): the rules, and the links that changed.
+  check:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Repository rules
+        run: python3 scripts/lint.py
+      - name: The station's website links to the donation page
+        run: |
+          mapfile -t changed < <(git diff --name-only --diff-filter=AM origin/main...HEAD -- 'stations/*.toml')
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "No entry changed."
+          else
+            python3 scripts/check_links.py "${changed[@]}"
+          fi
+      - name: Compile the list
+        run: python3 scripts/compile.py
+
+  # main, every push and every day: check every link, publish the list without the ones that fail.
+  publish:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      issues: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}v1/stations.json
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PAGES: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Repository rules
+        run: python3 scripts/lint.py
+      - name: Check every link
+        run: |
+          # Yesterday's status says since when each failing link fails. None on the first run.
+          curl -fsS "$PAGES/v1/status.json" -o previous.json || echo '{}' > previous.json
+          python3 scripts/check_links.py --daily previous.json -o site/v1/status.json --issues issues.json \
+            | tee check.txt
+          { echo '## Link check'; echo; echo '```'; cat check.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Compile the list
+        run: |
+          python3 scripts/compile.py --status site/v1/status.json -o site/v1/stations.json
+          cp station.schema.json site/v1/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
+      - name: Open issues for broken links
+        run: |
+          gh label create broken-link --color d73a4a --description "Left out of the published list" --force
+          jq -c '.[]' issues.json | while read -r issue; do
+            title=$(jq -r .title <<< "$issue")
+            jq -r .body <<< "$issue" > body.md
+            open=$(gh issue list --label broken-link --state open --search "\"$title\" in:title" \
+              --json title --jq "map(select(.title == \"$title\")) | length")
+            if [ "$open" = "0" ]; then
+              gh issue create --title "$title" --label broken-link --body-file body.md
+            fi
+          done

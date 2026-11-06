@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Station",
+  "description": "What Soundfolk adds to a Radio-Browser station. See README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "name", "homepage", "match", "donate"],
+  "properties": {
+    "schema": {
+      "description": "Format version.",
+      "const": 1
+    },
+    "name": {
+      "description": "The station's name, for people reading the file.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "homepage": {
+      "description": "The station's official website, reviewed by the maintainer. Links are checked against it, never against Radio-Browser's, which anyone can edit.",
+      "type": "string",
+      "pattern": "^https://",
+      "maxLength": 500
+    },
+    "match": {
+      "$ref": "#/$defs/Match",
+      "description": "Which stations the entry applies to."
+    },
+    "donate": {
+      "$ref": "#/$defs/Donate"
+    }
+  },
+  "$defs": {
+    "Match": {
+      "description": "Same as the recipes' `match` (soundfolk-recipes/recipe.schema.json), except that `stations` is required.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stations"],
+      "properties": {
+        "stations": {
+          "description": "Radio-Browser station UUIDs.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "streams": {
+          "description": "Stream URLs without the scheme (`host/path`), case-insensitive. A trailing `*` matches\nany path starting with what precedes it.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Donate": {
+      "description": "The station's donation page.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "found_on"],
+      "properties": {
+        "url": {
+          "description": "The donation page: on the station's own domain or a platform of platforms.toml.",
+          "type": "string",
+          "pattern": "^https://",
+          "maxLength": 500
+        },
+        "found_on": {
+          "description": "The page of the station's website that links to `url`: the proof, checked every day.",
+          "type": "string",
+          "pattern": "^https://",
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}
