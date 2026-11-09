@@ -4,7 +4,8 @@
 Usage: python3 scripts/compile_lists.py --status site/v1/lists-status.json [-o site/v1/lists.json]
 
 The status, from check_lists.py --daily, gives each station's stream and country as Radio-Browser
-has them today. The file holds what the app needs and nothing else (`checked` stays here):
+has them today, and the copy standing in for a UUID gone from Radio-Browser: the item then carries
+the copy's UUID (once, if the list already holds that copy). The file holds what the app needs and nothing else (`checked` stays here):
 
   {"version": 1, "lists": [{"id", "title", "description", "curators", "use", "genres", "countries",
                             "items": [{"uuid", "stream"}]}]}
@@ -31,17 +32,23 @@ args = parser.parse_args()
 
 status = json.loads(args.status.read_text(encoding="utf-8"))
 known, failing = status.get("stations", {}), status.get("failing", {})
+replaced = {u: r["by"] for u, r in status.get("replaced", {}).items() if "by" in r}
 
-published, left_out = [], 0
+published, left_out, standing_in = [], 0, 0
 for list_id, entry in lists():
-    stations = [known[u] | {"uuid": u} for u in entry["stations"] if u in known]
+    uuids = [replaced.get(u, u) for u in entry["stations"]]
+    stations = [known[u] | {"uuid": u} for u in dict.fromkeys(uuids) if u in known]
     counts = collections.Counter(s["country"] for s in stations if s["country"])
     countries = sorted(c for c, n in counts.items() if stations and n / len(stations) >= COUNTRY_SHARE)
-    items = []
-    for uuid in entry["stations"]:
-        if uuid in failing or uuid not in known:
+    items, seen = [], set()
+    for source, uuid in zip(entry["stations"], uuids):
+        if source in failing or uuid not in known:
             left_out += 1
             continue
+        if uuid in seen:
+            continue
+        seen.add(uuid)
+        standing_in += uuid != source
         item = {"uuid": uuid}
         if known[uuid]["stream"]:
             item["stream"] = known[uuid]["stream"]
@@ -62,5 +69,5 @@ args.output.write_text(
     json.dumps({"version": 1, "lists": published}, indent=1, ensure_ascii=False) + "\n", encoding="utf-8"
 )
 print(f"ok    {len(published)} list(s) in {args.output.name}, "
-      f"{sum(len(p['items']) for p in published)} station(s), {left_out} left out")
+      f"{sum(len(p['items']) for p in published)} station(s), {standing_in} through a copy, {left_out} left out")
 sys.exit(0)

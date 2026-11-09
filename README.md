@@ -121,12 +121,14 @@ Anything goes as long as the stations match the title and the description, whate
 shows each station's Radio-Browser name, country and whether its stream answers: check that each
 UUID is the station you meant. The country of the list is worked out from its stations.
 
-**Every day**, CI looks up every station again. A station gone from Radio-Browser, or whose stream
-no longer answers (from here and from Radio-Browser's own checkers), is left out of the published
-list, and comes back by itself once it answers again; the file doesn't change. The first curator gets
-an issue at once for a station gone from Radio-Browser (paste its new UUID), after 7 days for a
-stream that doesn't answer. Unanswered for 30 days, the maintainer fixes the list, takes it over or
-unpublishes it.
+**Every day**, CI looks up every station again. Radio-Browser deletes duplicates, so a UUID can
+disappear while the station is still there under another one: the copy playing the same stream then
+stands in for it in the published list, without asking anyone. A station gone from Radio-Browser
+with no copy playing its stream, or whose stream no longer answers (from here and from
+Radio-Browser's own checkers), is left out of the published list, and comes back by itself once it
+answers again; the file doesn't change. The first curator gets an issue at once for a station gone
+from Radio-Browser (paste its new UUID), after 7 days for a stream that doesn't answer. Unanswered
+for 30 days, the maintainer fixes the list, takes it over or unpublishes it.
 
 ## Check locally
 Python 3.11 or later, nothing to install:

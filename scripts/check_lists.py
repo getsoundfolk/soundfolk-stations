@@ -9,8 +9,15 @@ Usage (from anywhere; Python 3.11+, no dependencies):
       Checks every list and writes the status compile.py publishes from: each station's stream and
       country, and which stations are left out, since when. `previous` may be missing or empty.
 
+A UUID no longer in Radio-Browser is often a station still there under another UUID: Radio-Browser
+deletes duplicates and keeps one copy. The status keeps the last stream known for every station, so
+when a UUID disappears, the Radio-Browser copy playing that same stream stands in for it in the
+published list (the one with the same name first, then a working one, then the most voted). It
+stays in until the UUID comes back or the copy goes too. Nobody is asked anything and the source file
+does not change: a copy playing the same stream plays the same thing.
+
 A station fails when:
-  gone  its UUID is no longer in Radio-Browser (deleted, or re-created under another UUID)
+  gone  its UUID is no longer in Radio-Browser and no copy plays its last known stream
   dead  its stream does not answer from here and Radio-Browser's own check fails too: a stream
         blocked outside its country answers Radio-Browser's checkers, and stays in
 
@@ -18,8 +25,8 @@ A failing station is left out of the published list at once and comes back by it
 check passes again; the source file does not change. An issue is opened for the list at once for
 `gone`, after ISSUE_AFTER days for `dead`, and when the list has fewer than MIN_ITEMS stations left.
 If more than GUARD of the stations fail the same day (and there are at least GUARD_MIN), the problem
-is on this side: nothing new is left out and one issue says so. A year after `checked`, an issue
-asks the curators to review the list.
+is on this side: nothing new is left out and one issue says so. A copy standing in is not a failure.
+A year after `checked`, an issue asks the curators to review the list.
 """
 
 import argparse
@@ -33,7 +40,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from common import FetchError, ROOT, USER_AGENT, lists, load, radio_browser, stream_key
+from common import FetchError, ROOT, USER_AGENT, lists, load, name_key, radio_browser, stream_key
 
 ISSUE_AFTER = datetime.timedelta(days=7)
 REVIEW_AFTER = datetime.timedelta(days=365)
@@ -51,6 +58,31 @@ def lookup(uuids: list[str]) -> dict[str, dict]:
         for station in radio_browser("byuuid", uuids=",".join(uuids[i:i + BATCH])):
             found[station["stationuuid"]] = station
     return found
+
+
+def last_known(uuid: str, previous: dict) -> dict | None:
+    """What yesterday's status knew of this station (name, stream, urls), if it knew its stream."""
+    stations = previous.get("stations", {})
+    standing_in = previous.get("replaced", {}).get(uuid, {}).get("by")
+    for known in (stations.get(standing_in), stations.get(uuid), previous.get("replaced", {}).get(uuid),
+                  previous.get("lost", {}).get(uuid), previous.get("failing", {}).get(uuid)):
+        if isinstance(known, dict) and known.get("stream"):
+            return {"name": known.get("name", ""), "stream": known["stream"], "urls": known.get("urls", [])}
+    return None
+
+
+def same_stream(known: dict) -> list[dict]:
+    """The Radio-Browser stations playing this stream, the best stand-in first."""
+    urls = list(dict.fromkeys(known["urls"] + [f"https://{known['stream']}", f"http://{known['stream']}"]))
+    found = {}
+    for url in urls:
+        for station in radio_browser("byurl", url=url):
+            found[station["stationuuid"]] = station
+    playing = [s for s in found.values()
+               if known["stream"] in {stream_key(u) for u in (s.get("url"), s.get("url_resolved")) if u}]
+    name = name_key(known["name"])
+    return sorted(playing, key=lambda s: (name_key(s.get("name") or "") != name, s.get("lastcheckok") != 1,
+                                          -(s.get("votes") or 0), -(s.get("clickcount") or 0), s["stationuuid"]))
 
 
 def answers(url: str) -> str | None:
@@ -86,6 +118,7 @@ def check(uuids: list[str]) -> tuple[dict[str, dict], dict[str, tuple[str, str]]
             "country": (station.get("countrycode") or "").upper(),
             "stream": stream_key(url) if url else "",
             "url": url,
+            "urls": list(dict.fromkeys(u for u in (station.get("url"), station.get("url_resolved")) if u)),
             "rb_ok": station.get("lastcheckok") == 1,
         }
     with concurrent.futures.ThreadPoolExecutor(16) as pool:
@@ -137,9 +170,46 @@ def daily(previous_path: Path, out: Path, issues_out: Path | None) -> int:
     before = previous.get("failing", {}) if isinstance(previous, dict) else {}
     now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
 
+    if not isinstance(previous, dict):
+        previous = {}
+
     all_lists = lists()
     uuids = sorted({u for _, entry in all_lists for u in entry["stations"]})
-    info, failed = check(uuids)
+
+    # Which Radio-Browser station stands for each UUID of the lists: itself, or a copy playing its stream.
+    standing = {u: r["by"] for u, r in previous.get("replaced", {}).items() if u in uuids and "by" in r}
+    present = lookup(sorted(set(uuids) | set(standing.values())))
+    effective, replaced, lost, gone = {}, {}, {}, {}
+    for uuid in uuids:
+        if uuid in present:
+            effective[uuid] = uuid
+            continue
+        before_rep = previous.get("replaced", {}).get(uuid, {})
+        known = last_known(uuid, previous)
+        if standing.get(uuid) in present:
+            copy = standing[uuid]
+        else:
+            copies = same_stream(known) if known else []
+            copy = copies[0]["stationuuid"] if copies else None
+        if copy is None:
+            gone[uuid] = ("gone", f"{uuid} is no longer in Radio-Browser, and no copy plays "
+                                  + (f"its stream `{known['stream']}`" if known else "its stream (unknown here)"))
+            if known:
+                lost[uuid] = known
+            continue
+        effective[uuid] = copy
+        replaced[uuid] = (known or {}) | {
+            "by": copy,
+            "since": before_rep.get("since", now.isoformat()) if before_rep.get("by") == copy else now.isoformat(),
+        }
+        if before_rep.get("by") != copy:
+            print(f"MOVED {uuid} -> {copy}: same stream `{replaced[uuid].get('stream', '')}`")
+
+    info, failed_now = check(sorted(set(effective.values())))
+    failed = dict(gone)
+    for uuid, copy in effective.items():
+        if copy in failed_now:
+            failed[uuid] = failed_now[copy]
     for uuid in uuids:
         if uuid in failed:
             print(f"FAIL  {uuid}: {failed[uuid][1]}")
@@ -175,7 +245,8 @@ def daily(previous_path: Path, out: Path, issues_out: Path | None) -> int:
                 "title": f"List: {list_id}",
                 "body": f"@{curator}, {len(out_here)} station(s) of `lists/{list_id}.toml` are left out of the "
                         f"published list ({left} published).\n\n" + "\n".join(lines) + "\n\n"
-                        "A station *gone* from Radio-Browser needs its new UUID, or to be removed; a *dead* one "
+                        "A station *gone* from Radio-Browser, with no copy playing its stream, needs its new "
+                        "UUID or to be removed; a *dead* one "
                         "comes back by itself as soon as its stream answers again. Without an answer from the "
                         "curators within 30 days, the maintainer fixes the list, takes it over or unpublishes it.",
             })
@@ -194,14 +265,17 @@ def daily(previous_path: Path, out: Path, issues_out: Path | None) -> int:
     status = {
         "version": 1,
         "checked_at": now.isoformat(),
-        "stations": {u: {k: info[u][k] for k in ("name", "country", "stream")} for u in sorted(info)},
+        "stations": {u: {k: info[u][k] for k in ("name", "country", "stream", "urls")} for u in sorted(info)},
+        "replaced": {u: replaced[u] for u in sorted(replaced)},
+        "lost": {u: lost[u] for u in sorted(lost)},
         "failing": failing,
     }
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(status, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     if issues_out:
         issues_out.write_text(json.dumps(issues, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"{len(all_lists)} list(s), {len(uuids)} station(s), {len(failed)} failed today, {len(failing)} left out"
+    print(f"{len(all_lists)} list(s), {len(uuids)} station(s), {len(replaced)} played through a copy, "
+          f"{len(failed)} failed today, {len(failing)} left out"
           + (" (too many failures: nothing new left out)" if guard else ""))
     return 0
 
