@@ -34,6 +34,7 @@ import concurrent.futures
 import datetime
 import http.client
 import json
+import re
 import socket
 import sys
 import urllib.error
@@ -49,6 +50,8 @@ GUARD_MIN = 10
 MIN_ITEMS = 5
 STREAM_TIMEOUT = 15
 BATCH = 50
+# Words too common in station names to look a station up by.
+COMMON_WORDS = {"radio", "stream", "live", "music", "musique", "online", "station", "webradio"}
 
 
 def lookup(uuids: list[str]) -> dict[str, dict]:
@@ -77,6 +80,11 @@ def same_stream(known: dict) -> list[dict]:
     found = {}
     for url in urls:
         for station in radio_browser("byurl", url=url):
+            found[station["stationuuid"]] = station
+    # `byurl` only reads the URL as added, not the stream it leads to (a playlist, a redirect, a query
+    # string), so the stations named like it are looked through too; the stream decides.
+    for word in dict.fromkeys(w for w in re.findall(r"\w{4,}", known["name"].lower()) if w not in COMMON_WORDS):
+        for station in radio_browser("search", name=word, limit=1000, hidebroken="false"):
             found[station["stationuuid"]] = station
     playing = [s for s in found.values()
                if known["stream"] in {stream_key(u) for u in (s.get("url"), s.get("url_resolved")) if u}]
