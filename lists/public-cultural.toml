@@ -21,10 +21,10 @@ stations = [
   "c96b0b99-6dc6-4b76-9971-b48a55c628ca",  # RTÉ lyric fm
   "38fbe434-aa0d-4f31-a16d-002191c78193",  # NRK Klassisk Radio
   "960f5af4-0601-11e8-ae97-52543be04c81",  # DR P2
-  "287a4851-de0c-4184-8255-b435d6b62e0b",  # Sveriges Radio - P2 Klassiskt
+  "960c62c1-0601-11e8-ae97-52543be04c81",  # Sveriges Radio - P2
   "22c402d1-2a7f-4713-8e2b-646070026dba",  # Yle Klassinen
   "02c6e041-e8fb-4734-92fb-f22250073044",  # ČRo D-dur
   "961d7d8c-0601-11e8-ae97-52543be04c81",  # Bartók Rádió
   "0a488605-22d8-4d0c-9268-8cc2f944b597",  # ICI Musique Classique - Montreal, QC
-  "30928802-8f3b-4083-94ee-7cb3c6c41790",  # WQXR 105.9 FM
+  "f4b99261-de24-4719-9126-19d31c3afc68",  # WQXR
 ]
