@@ -11,17 +11,17 @@ stations = [
   "d1298c14-014d-40d7-8864-715c79d45b95",  # Fréquence 7
   "ab30ca84-c228-4f57-8cac-816c69ef651d",  # RDWA
   "0842377e-9c21-4567-a326-6303a48b0ea1",  # FPP Fréquence Paris Plurielle rfpp
-  "721741b1-738f-41ea-9bc0-47fcc99cf90b",  # Radio Campus Paris
-  "64a6fb26-a079-4eec-858e-c0ac27884ea8",  # Radio Campus Clermont-Ferrand
+  "3859f931-66c5-4264-afc1-682e186d7263",  # Radio Campus Paris
+  "3d6c5b35-1de9-460a-b0e4-2f1e676954f7",  # Radio Campus Clermont-Ferrand
   "e6639188-dc36-4441-ba83-4b6832a58c83",  # Radio grenouille
-  "41ca1b1f-23f0-4778-9dfe-bcbfea7e6049",  # Radio Canut
-  "33f9f2d0-206f-4f89-b78e-1c2863f40895",  # RADIO PRIMITIVE
-  "2a5dc8a9-be0f-461a-a33f-bf0709de5418",  # Radio Dio
+  "1242554d-1b52-427d-8427-da2fe09fe044",  # RadioCanut
+  "bfa6b0d4-c2bf-4775-8c09-15db34bc8fad",  # RADIO PRIMITIVE
+  "512210a8-f3ec-4d99-aefe-f88f8a54a6b0",  # Radio Diot
   "e14f27a9-edf0-47fc-9302-cc83c2d1c5eb",  # Radio Larzac
   "32038781-351b-11e8-bb9b-52543be04c81",  # Radio Pikez !
   "0eeb750f-40b2-44e8-ab43-4d881454bcd0",  # Radio Béton - Tours 93.6
-  "9615628c-0601-11e8-ae97-52543be04c81",  # Radio Zinzine
-  "fb71aa45-cf9f-4744-a4bc-e0b751e649c8",  # Radio Grésivaudan
+  "19b3687e-0a48-470e-8434-80f49b983c1f",  # Radio Zinzine
+  "aac5facd-cb3c-48eb-9f77-5d1c7daf7b3c",  # Radio Gresivaudan
   "a2bfb4e2-d932-4888-b0c7-f444f4269897",  # Radio PFM
 ]
 

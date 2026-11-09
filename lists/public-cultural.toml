@@ -8,13 +8,13 @@ use = ["discovery", "calm"]
 genres = ["classical", "jazz"]
 
 stations = [
-  "932eb148-e6f6-11e9-a96c-52543be04c81",  # FIP
+  "a349e1e9-2844-443a-973b-09a02fa12c8e",  # FIP (hifi.aac)
   "5e992e1e-e6ef-11e9-a96c-52543be04c81",  # France Musique
   "960ef421-0601-11e8-ae97-52543be04c81",  # Klara
-  "9619cb9f-0601-11e8-ae97-52543be04c81",  # RTBF Musiq3
-  "9c2f41c2-86bb-11e8-aa66-52543be04c81",  # NPO Radio 4
-  "961ac56b-0601-11e8-ae97-52543be04c81",  # Radio Swiss Jazz
-  "96077079-0601-11e8-ae97-52543be04c81",  # Radio Swiss Classic German
+  "1ad6beb7-0e3f-46e6-a455-a730bb2e884f",  # RTBF Musiq3
+  "383f2ed8-96ad-4820-be03-dd2880707831",  # NPO Klassiek
+  "97796a69-e2f9-4346-b878-70e1a49bbde2",  # Radio Swiss Jazz
+  "34edbcea-ce81-4e39-81ab-71e74745d544",  # Radio Swiss Classic
   "29010f42-faef-4a9e-b15c-3ad1613b45cb",  # BR-Klassik
   "0e2e2f4a-c8aa-11e9-8502-52543be04c81",  # Rai Radio Classica Filodiffusione
   "da69613a-bae9-4492-aab9-fb96b48249b5",  # Radio Clásica

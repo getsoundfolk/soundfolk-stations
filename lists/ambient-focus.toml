@@ -13,12 +13,12 @@ stations = [
   "a807ecc5-8410-4704-bac4-aed64ba76742",  # SomaFM Deep Space One (128k MP3)
   "83accca7-b878-419d-a506-3d21ef2f250f",  # SomaFM Synphaera Radio
   "961fa288-0601-11e8-ae97-52543be04c81",  # Ambient Sleeping Pill
-  "9609ed67-0601-11e8-ae97-52543be04c81",  # Cryosleep
-  "960c36e6-0601-11e8-ae97-52543be04c81",  # Echoes of Bluemars
-  "d5468df4-e6d0-11e9-a96c-52543be04c81",  # Slow Focus | NTS
+  "86152b07-2ca7-4469-b7f9-c7814cac4bea",  # Echoes of Bluemars Cryosleep
+  "748061d6-1f57-4ccf-ad0b-ed15e3ed71f3",  # Echoes of Bluemars
+  "c6b63961-7b70-4d29-8af3-fe3dbbc4255c",  # Slow Focus - Infinite Mixtapes | NTS
   "961aeb3b-0601-11e8-ae97-52543be04c81",  # Ambient Modern
   "ab2208bf-6f70-443e-ad11-73f594b2629f",  # Planet Ambi HD
-  "9067dc39-4bf4-4364-bd6b-8020cff3e15d",  # Nightride FM - Chillsynth
+  "241e1e0d-dbd0-4797-9fb9-ed3b391ac60a",  # Nightride FM Chillsynth
   "c81f0dfe-0497-4c53-b8a0-36e8494ee207",  # Low Key - Infinite Mixtapes | NTS
 ]
 
