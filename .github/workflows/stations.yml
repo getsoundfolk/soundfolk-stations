@@ -150,3 +150,17 @@ jobs:
               gh issue create --title "$title" --label "$label" --body-file body.md
             fi
           done
+          # An issue of this check that today's run no longer raises is fixed: close it. Not on a day
+          # the check distrusts itself (too many failures), when what it didn't raise is unknown.
+          if ! jq -s -e 'add | any(.title | endswith("too many failures"))' issues.json list-issues.json > /dev/null; then
+            jq -s -r 'add | .[].title' issues.json list-issues.json > raised.txt
+            for label in broken-link list-review; do
+              gh issue list --label "$label" --state open --limit 200 --json number,title,author \
+                --jq '.[] | select(.author.is_bot) | "\(.number)\t\(.title)"' |
+              while IFS=$'\t' read -r number title; do
+                if ! grep -Fxq -- "$title" raised.txt; then
+                  gh issue close "$number" --comment "Fixed: the check of $(date -u +%F) passes." < /dev/null
+                fi
+              done
+            done
+          fi

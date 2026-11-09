@@ -26,6 +26,7 @@ check passes again; the source file does not change. An issue is opened for the 
 `gone`, after ISSUE_AFTER days for `dead`, and when the list has fewer than MIN_ITEMS stations left.
 If more than GUARD of the stations fail the same day (and there are at least GUARD_MIN), the problem
 is on this side: nothing new is left out and one issue says so. A copy standing in is not a failure.
+The workflow closes an issue of this check that a day's run (not a guarded one) no longer raises.
 A year after `checked`, an issue asks the curators to review the list.
 """
 

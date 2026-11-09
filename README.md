@@ -127,8 +127,9 @@ stands in for it in the published list, without asking anyone. A station gone fr
 with no copy playing its stream, or whose stream no longer answers (from here and from
 Radio-Browser's own checkers), is left out of the published list, and comes back by itself once it
 answers again; the file doesn't change. The first curator gets an issue at once for a station gone
-from Radio-Browser (paste its new UUID), after 7 days for a stream that doesn't answer. Unanswered
-for 30 days, the maintainer fixes the list, takes it over or unpublishes it.
+from Radio-Browser (paste its new UUID), after 7 days for a stream that doesn't answer; the check
+closes the issue itself once it passes again. Unanswered for 30 days, the maintainer fixes the list,
+takes it over or unpublishes it.
 
 ## Check locally
 Python 3.11 or later, nothing to install:
