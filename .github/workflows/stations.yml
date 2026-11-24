@@ -21,10 +21,10 @@ jobs:
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Repository rules
@@ -101,13 +101,13 @@ jobs:
       issues: write
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}v1/stations.json
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/v1/stations.json
     env:
       GH_TOKEN: ${{ github.token }}
       PAGES: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Repository rules
@@ -130,12 +130,12 @@ jobs:
           python3 scripts/compile.py --status site/v1/status.json -o site/v1/stations.json
           python3 scripts/compile_lists.py --status site/v1/lists-status.json -o site/v1/lists.json
           cp station.schema.json list.schema.json site/v1/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
       - name: Open issues for broken links and lists
         run: |
           gh label create broken-link --color d73a4a --description "Left out of the published list" --force
