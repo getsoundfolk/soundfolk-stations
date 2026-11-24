@@ -134,7 +134,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
+      # deploy-pages often fails to find the artifact the step above has just uploaded ("No artifacts
+      # named github-pages"): the artifact service is not up to date yet. A second try a minute
+      # later finds it. The job fails only when the second try fails too.
       - id: deploy
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+      - name: Wait before deploying again
+        if: steps.deploy.outcome == 'failure'
+        run: |
+          echo "::warning::The deployment failed, trying again in a minute."
+          sleep 60
+      - if: steps.deploy.outcome == 'failure'
         uses: actions/deploy-pages@v5
       - name: Open issues for broken links and lists
         run: |
